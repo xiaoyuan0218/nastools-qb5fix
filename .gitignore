@@ -1,0 +1,16 @@
+# Config & data
+config.yaml
+*.db
+*.dat
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Docker
+*.tar.gz
