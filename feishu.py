@@ -13,6 +13,23 @@ class Feishu(_IMessageClient):
     _sign_check = False
     _sign_secret = None
 
+    _EMOJI_MAP = {
+        "开始下载": "📥",
+        "已入库": "✅",
+        "已添加订阅": "📌",
+        "订阅完成": "🎉",
+        "失败": "❌",
+        "错误": "⚠️",
+        "站点签到": "🔔",
+        "站点消息": "📬",
+    }
+    _COLOR_MAP = {
+        "成功": "green",
+        "完成": "green",
+        "失败": "red",
+        "错误": "red",
+    }
+
     def __init__(self, config):
         self._client_config = config
         self.init_config()
@@ -36,14 +53,25 @@ class Feishu(_IMessageClient):
         hmac_code = hmac.new(string_to_sign.encode("utf-8"), digestmod=hashlib.sha256).digest()
         return base64.b64encode(hmac_code).decode('utf-8')
 
+    @staticmethod
+    def _choose_emoji(title):
+        """根据标题自动匹配 emoji"""
+        for keyword, emoji in Feishu._EMOJI_MAP.items():
+            if keyword in title:
+                return emoji
+        return "📢"
+
+    @staticmethod
+    def _choose_color(title):
+        """根据标题自动匹配颜色"""
+        for keyword, color in Feishu._COLOR_MAP.items():
+            if keyword in title:
+                return color
+        return "blue"
+
     def send_msg(self, title, text="", image="", url="", user_id=""):
         """
-        发送飞书消息（Webhook）
-        :param title: 消息标题
-        :param text: 消息内容
-        :param image: 图片地址（飞书Webhook不支持直接发图片，仅附加链接）
-        :param url: 点击跳转URL
-        :param user_id: Webhook不支持指定用户
+        发送飞书消息（卡片格式）
         """
         if not title and not text:
             return False, "标题和内容不能同时为空"
@@ -51,15 +79,73 @@ class Feishu(_IMessageClient):
             return False, "Webhook 地址未配置"
 
         try:
-            content = f"{title}\n{text}" if text else title
-            if url:
-                content = f"{content}\n🔗 详情：{url}"
+            emoji = self._choose_emoji(title)
+            color = self._choose_color(title)
+
+            # 构建卡片 elements
+            elements = []
+
+            # 主标题行（如果有 text，把 title 作为 header，text 作为 body）
+            if text:
+                # 将纯文本中的 \n 转为 lark_md 换行
+                md_text = text.replace("\n", "\n")
+                elements.append({
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": md_text
+                    }
+                })
+            else:
+                elements.append({
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": title
+                    }
+                })
+
+            # 图片和链接区域
+            has_extra = bool(image) or bool(url) or bool(image and url)
+            if has_extra:
+                elements.append({"tag": "hr"})
+
             if image:
-                content = f"{content}\n🖼 {image}"
+                elements.append({
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": f"🖼 [查看海报]({image})"
+                    }
+                })
+
+            if url:
+                if url == 'downloading':
+                    btn_text = "📥 查看下载"
+                else:
+                    btn_text = "🔗 查看详情"
+                elements.append({
+                    "tag": "action",
+                    "actions": [{
+                        "tag": "button",
+                        "text": {"tag": "plain_text", "content": btn_text},
+                        "url": url,
+                        "type": "default"
+                    }]
+                })
 
             payload = {
-                "msg_type": "text",
-                "content": {"text": content}
+                "msg_type": "interactive",
+                "card": {
+                    "header": {
+                        "title": {
+                            "tag": "plain_text",
+                            "content": f"{emoji} {title.split(chr(10))[0]}"
+                        },
+                        "template": color
+                    },
+                    "elements": elements
+                }
             }
 
             if self._sign_check and self._sign_secret:
@@ -91,8 +177,7 @@ class Feishu(_IMessageClient):
 
     def send_list_msg(self, medias: list, user_id="", title="", **kwargs):
         """
-        发送列表类消息
-        :param medias: 媒体列表
+        发送列表类消息（卡片格式）
         """
         if not medias:
             return False, "参数有误"
@@ -100,17 +185,40 @@ class Feishu(_IMessageClient):
             return False, "Webhook 地址未配置"
 
         try:
-            content = f"📋 {title}\n\n"
+            elements = [
+                {
+                    "tag": "div",
+                    "text": {
+                        "tag": "lark_md",
+                        "content": f"📋 **{title or '列表'}**"
+                    }
+                },
+                {"tag": "hr"}
+            ]
+
             for idx, media in enumerate(medias, 1):
-                content += f"{idx}. {media.get_title_string()}\n"
+                line = f"{idx}. **{media.get_title_string()}**"
                 if media.get_vote_string():
-                    content += f"   {media.get_type_string()}，{media.get_vote_string()}\n"
+                    line += f"\n   {media.get_type_string()}，{media.get_vote_string()}"
                 if media.get_detail_url():
-                    content += f"   🔗 {media.get_detail_url()}\n"
+                    line += f"\n   🔗 {media.get_detail_url()}"
+                elements.append({
+                    "tag": "div",
+                    "text": {"tag": "lark_md", "content": line}
+                })
 
             payload = {
-                "msg_type": "text",
-                "content": {"text": content}
+                "msg_type": "interactive",
+                "card": {
+                    "header": {
+                        "title": {
+                            "tag": "plain_text",
+                            "content": f"📋 {title or '列表'}"
+                        },
+                        "template": "blue"
+                    },
+                    "elements": elements
+                }
             }
 
             res = requests.post(
