@@ -96,6 +96,7 @@ if [ -d /nas-tools-patches ]; then
     cp -f /nas-tools-patches/app/conf/moduleconf.py /nas-tools/app/conf/moduleconf.py 2>/dev/null || true
     cp -f /nas-tools-patches/web/action.py /nas-tools/web/action.py 2>/dev/null || true
     cp -f /nas-tools-patches/third_party/qbittorrent-api/qbittorrentapi/auth.py /nas-tools/third_party/qbittorrent-api/qbittorrentapi/auth.py 2>/dev/null || true
+    cp -f /nas-tools-patches/app/downloader/client/qbittorrent.py /nas-tools/app/downloader/client/qbittorrent.py 2>/dev/null || true
     echo "补丁应用完成"
 fi
 
