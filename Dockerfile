@@ -1,12 +1,27 @@
 FROM ahsyon2023/nastools:db2.9.1
 
+# ==============================================================
+# qB5fix + Feishu notification patches for NAStool
+# ==============================================================
+# Patches are stored in /nas-tools-patches/ and applied at startup
+# by the wrapper entrypoint (start.sh), which runs AFTER git reset
+# to ensure patches survive auto-update.
+
 # qBittorrent 5.2.x cookie name fix (SID -> QBT_SID_8080)
-# Copy to patches dir so entrypoint can restore it after git reset
 COPY auth.py /nas-tools-patches/third_party/qbittorrent-api/qbittorrentapi/auth.py
+
+# Feishu (飞书) notification client
 COPY feishu.py /nas-tools-patches/app/message/client/feishu.py
 COPY feishu.png /nas-tools-patches/web/static/img/feishu.png
 COPY moduleconf.py /nas-tools-patches/app/conf/moduleconf.py
 
-# Patched entrypoint that restores custom files after git reset
+# Wrapper entrypoint (outside repo, survives git reset)
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Keep original entrypoint for reference
 COPY entrypoint.sh /nas-tools/docker/entrypoint.sh
 RUN chmod +x /nas-tools/docker/entrypoint.sh
+
+# Override ENTRYPOINT to use wrapper
+ENTRYPOINT ["/start.sh"]
