@@ -15,6 +15,9 @@ COPY feishu.py /nas-tools-patches/app/message/client/feishu.py
 COPY feishu.png /nas-tools-patches/web/static/img/feishu.png
 COPY moduleconf.py /nas-tools-patches/app/conf/moduleconf.py
 
+# Fix: send_download_fail_message on download failure (action.py web route)
+COPY action.py /nas-tools-patches/app/web/action.py
+
 # Wrapper entrypoint (outside repo, survives git reset)
 COPY start.sh /start.sh
 RUN chmod +x /start.sh

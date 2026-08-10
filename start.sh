@@ -94,6 +94,7 @@ if [ -d /nas-tools-patches ]; then
     cp -f /nas-tools-patches/app/message/client/feishu.py /nas-tools/app/message/client/feishu.py 2>/dev/null || true
     cp -f /nas-tools-patches/web/static/img/feishu.png /nas-tools/web/static/img/feishu.png 2>/dev/null || true
     cp -f /nas-tools-patches/app/conf/moduleconf.py /nas-tools/app/conf/moduleconf.py 2>/dev/null || true
+    cp -f /nas-tools-patches/app/web/action.py /nas-tools/app/web/action.py 2>/dev/null || true
     cp -f /nas-tools-patches/third_party/qbittorrent-api/qbittorrentapi/auth.py /nas-tools/third_party/qbittorrent-api/qbittorrentapi/auth.py 2>/dev/null || true
     echo "补丁应用完成"
 fi
