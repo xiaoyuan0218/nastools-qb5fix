@@ -362,7 +362,9 @@ class Qbittorrent(_IDownloadClient):
                                             use_auto_torrent_management=use_auto_torrent_management,
                                             cookie=cookie)
             if qbc_ret:
-                ret_str = str(qbc_ret)
+                # qB 4.x: torrents_add returns string "Ok."
+                # qB 5.x: torrents_add returns Response object (because updated qbittorrent-api)
+                ret_str = qbc_ret.text if hasattr(qbc_ret, 'text') else str(qbc_ret)
                 if "Ok" in ret_str or "success_count" in ret_str:
                     return True
             return False
