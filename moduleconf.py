@@ -388,13 +388,14 @@ class ModuleConf(object):
                         "placeholder": ""
                     }
                 }
+            },
             "feishu": {
                 "name": "飞书",
                 "img_url": "../static/img/feishu.png",
                 "config": {
                     "webhook_url": {
                         "id": "feishu_webhook_url",
-                        "required": true,
+                        "required": True,
                         "title": "Webhook 地址",
                         "tooltip": "飞书群机器人的 Webhook 地址，在群设置 > 机器人中添加获取",
                         "type": "text",
@@ -402,21 +403,20 @@ class ModuleConf(object):
                     },
                     "sign_check": {
                         "id": "feishu_sign_check",
-                        "required": false,
+                        "required": False,
                         "title": "签名校验",
                         "tooltip": "飞书机器人安全设置中的签名校验开关，开启后需填写签名密钥",
                         "type": "switch"
                     },
                     "sign_secret": {
                         "id": "feishu_sign_secret",
-                        "required": false,
+                        "required": False,
                         "title": "签名密钥",
                         "tooltip": "签名校验密钥，在飞书机器人安全设置中获取",
                         "type": "text",
                         "placeholder": ""
                     }
                 }
-            },
             },
         },
         "switch": {
